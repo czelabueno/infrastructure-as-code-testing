@@ -3,14 +3,17 @@ package unit_testing
 import (
 	"testing"
 
+	ct "github.com/daviddengcn/go-colortext"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 )
 
-// TerratestExecution test only one workload module isolated. The test stages include: init, create or update, provisioning validate and destroy.
+// TerratestExecution test only one module isolated. The test stages include: Parser, dry run, init, create or update, provisioning validate and destroy.
 // Terraform commands wrapped by Terratest
 // Parameters:
 // t - current test state
+// useStaticAnalysis - flag to indicate if execution will include static analysis
 // Return:
 // result - TerraModuleStatus
 func (module *TerraModule) TerratestExecution(t *testing.T, useStaticAnalysis bool) (result TerraModuleStatus) {
@@ -23,19 +26,39 @@ func (module *TerraModule) TerratestExecution(t *testing.T, useStaticAnalysis bo
 
 	if useStaticAnalysis {
 		module.RunStaticAnalysis(t, terraformOptions)
+		ct.Foreground(ct.Blue, true)
+		logger.Logf(t, "Creating or changing module...")
+		ct.Foreground(ct.White, false)
 		// Run `terraform apply` and failed if en error in founded
 		terraform.Apply(t, terraformOptions)
 	} else {
+		ct.Foreground(ct.Blue, true)
+		logger.Logf(t, "Creating or changing module...")
+		ct.Foreground(ct.White, false)
 		// Run `terraform init` and `terraform apply` and failed if en error in founded
 		terraform.InitAndApply(t, terraformOptions)
 	}
+
 	// at the end of the test the resources are destroyed
+	ct.Foreground(ct.Blue, true)
+	logger.Logf(t, "Destroying module...")
+	ct.Foreground(ct.White, false)
 	defer terraform.Destroy(t, terraformOptions)
 	return Successful
 }
 
-// RunStaticAnalysis ... something comment
+// RunStaticAnalysis test just static analysis. Include Parser, dry run: init, validate and plan.
+// Terraform commands wrapped by Terratest
+// Parameters:
+// t - current test state
+// terraformOptions - structure that contains module path and args.
+// Return:
+// result - TerraModuleStatus
 func (module *TerraModule) RunStaticAnalysis(t *testing.T, terraformOptions *terraform.Options) (result TerraModuleStatus) {
+	ct.Foreground(ct.Blue, true)
+	logger.Logf(t, "Running static analysis...")
+	ct.Foreground(ct.White, false)
+
 	if terraformOptions == nil {
 		tfOptions, err := CreateTerraformOptions(t, module)
 		terraformOptions = tfOptions
@@ -55,7 +78,7 @@ func (module *TerraModule) RunStaticAnalysis(t *testing.T, terraformOptions *ter
 	return Successful
 }
 
-// CreateTerraformOptions ... create terraform options with terraform module
+// CreateTerraformOptions ... create terraform options using TerraModule fields
 func CreateTerraformOptions(t *testing.T, module *TerraModule) (*terraform.Options, error) {
 	if module.RootFolderPath == "" {
 		module.RootFolderPath = "../" // Set Default root folder path assuming that test file is located in ./test
