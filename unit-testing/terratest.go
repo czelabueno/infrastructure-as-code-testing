@@ -3,6 +3,7 @@ package unit_testing
 import (
 	"testing"
 
+	"github.com/czelabueno/infrastructure-as-code-testing/validate/azure"
 	ct "github.com/daviddengcn/go-colortext"
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -39,6 +40,12 @@ func (module *TerraModule) TerratestExecution(t *testing.T, useStaticAnalysis bo
 		terraform.InitAndApply(t, terraformOptions)
 	}
 
+	// validating provisioned resources
+	ok, err := azure.ValidateModule(t, terraformOptions)
+	if !ok || err != nil {
+		t.Fatal()
+		return Failed
+	}
 	// at the end of the test the resources are destroyed
 	ct.Foreground(ct.Blue, true)
 	logger.Logf(t, "Destroying module...")

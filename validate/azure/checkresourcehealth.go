@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/resourcehealth/mgmt/2017-07-01/resourcehealth"
-	unit_testing "github.com/czelabueno/infrastructure-as-code-testing/unit-testing"
 	ct "github.com/daviddengcn/go-colortext"
 	"github.com/gruntwork-io/terratest/modules/azure"
 	"github.com/gruntwork-io/terratest/modules/logger"
@@ -21,10 +20,11 @@ import (
 // terraformOptions - structure that contains module path and args.
 // Return:
 // result - unit_testing.TerraModuleStatus
-func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result unit_testing.TerraModuleStatus) {
+func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result bool, err error) {
 	ct.Foreground(ct.Blue, true)
-	logger.Logf(t, "Validating provisioned resource ...")
+	logger.Logf(t, "Validating provisioned resource...")
 	ct.Foreground(ct.White, false)
+	result = false
 
 	// Validate terraformOptions param because is mandatory for validation
 	if terraformOptions != nil {
@@ -41,7 +41,6 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result u
 			availabilityStatusesClient.Authorizer = *authorizer
 		} else {
 			t.Fatalf("Authorization is Failed: %s", err.Error())
-			result = unit_testing.Failed
 			t.Fail()
 		}
 
@@ -51,7 +50,6 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result u
 		availabilityStatus, err := availabilityStatusesClient.GetByResource(ctx, resourceID, "", "")
 		if err != nil {
 			t.Fatalf("Cant connect with azure resourcehealth api service: %s", err.Error())
-			result = unit_testing.Failed
 			t.Fail() // So if error is not null the test must be fail
 		}
 
@@ -61,11 +59,10 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result u
 			logger.Logf(t, "Resource %s is unhealthy status: \t%s", resourceName, fmt.Sprint(availabilityStatus.Properties.AvailabilityState))
 			ct.Foreground(ct.White, false)
 			t.Error("Resource " + resourceName + " is unhealthy :( . Please check resource config")
-			result = unit_testing.Failed
 			t.Fail() // So if resource is unhealthy the test should be fail
 		} else {
+			result = true
 			ct.Foreground(ct.Green, true)
-			result = unit_testing.Successful
 			logger.Logf(t, "Validation complete! Resource "+resourceName+" is: "+fmt.Sprint(resourcehealth.Available))
 			ct.Foreground(ct.White, false)
 		}
@@ -74,10 +71,9 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result u
 		ct.Foreground(ct.Red, false)
 		logger.Logf(t, "ERROR: terraform.Options cant be nill")
 		ct.Foreground(ct.White, false)
-		result = unit_testing.Failed
 		t.Fatal("terraform.Options cant be nil :( . Please check your test code")
 		t.Fail()
 	}
-	return result
+	return
 
 }
