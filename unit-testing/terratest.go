@@ -1,7 +1,6 @@
 package unit_testing
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -48,7 +47,7 @@ func (module *TerraModule) RunStaticAnalysis(t *testing.T, terraformOptions *ter
 	// terraform init ...
 	terraform.Init(t, terraformOptions)
 	// terraform validate ...
-	args := []string{"validate", fmt.Sprintf("-upgrade=%t", terraformOptions.Upgrade)}
+	args := []string{"validate"}
 	args = append(args, terraform.FormatTerraformBackendConfigAsArgs(terraformOptions.BackendConfig)...)
 	terraform.RunTerraformCommand(t, terraformOptions, args...)
 	// terraform plan ...
