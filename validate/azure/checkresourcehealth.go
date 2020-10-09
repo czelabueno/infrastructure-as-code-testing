@@ -39,15 +39,15 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result b
 		authorizer, err := azure.NewAuthorizer()
 		if err == nil {
 			availabilityStatusesClient.Authorizer = *authorizer
+			availabilityStatusesClient.RetryAttempts = 5
+			availabilityStatusesClient.RetryDuration = time.Second * 5
 		} else {
 			t.Fatalf("Authorization is Failed: %s", err.Error())
 			t.Fail()
 		}
 
 		// Get health availability status of the given resource
-		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
-		defer cancel()
-		availabilityStatus, err := availabilityStatusesClient.GetByResource(ctx, resourceID, "", "")
+		availabilityStatus, err := availabilityStatusesClient.GetByResource(context.Background(), resourceID, "", "")
 		if err != nil {
 			t.Fatalf("Cant connect with azure resourcehealth api service: %s", err.Error())
 			t.Fail() // So if error is not null the test must be fail
