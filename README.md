@@ -189,4 +189,6 @@ If it dont works change the number version of `infrastructure-as-code-testing` i
 - Azure SDK docs are at [godoc.org](https://godoc.org/github.com/Azure/azure-sdk-for-go/).
 
 ## Author
-@czelabueno _Please, dont forget contribute on this repo_ :)
+@czelabueno
+
+ _Please, dont forget contribute on this repo_ :)

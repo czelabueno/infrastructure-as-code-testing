@@ -39,18 +39,15 @@ func (module *TerraModule) TerratestExecution(t *testing.T, useStaticAnalysis bo
 		// Run `terraform init` and `terraform apply` and failed if en error in founded
 		terraform.InitAndApply(t, terraformOptions)
 	}
-
+	// cleaning all provisioned resources
+	defer CleanUpExecution(t, terraformOptions)
 	// validating provisioned resources
 	ok, err := azure.ValidateModule(t, terraformOptions)
 	if !ok || err != nil {
 		t.Fatal()
 		return Failed
 	}
-	// at the end of the test the resources are destroyed
-	ct.Foreground(ct.Blue, true)
-	logger.Logf(t, "Destroying module...")
-	ct.Foreground(ct.White, false)
-	defer terraform.Destroy(t, terraformOptions)
+
 	return Successful
 }
 
@@ -81,7 +78,7 @@ func (module *TerraModule) RunStaticAnalysis(t *testing.T, terraformOptions *ter
 	args = append(args, terraform.FormatTerraformBackendConfigAsArgs(terraformOptions.BackendConfig)...)
 	terraform.RunTerraformCommand(t, terraformOptions, args...)
 	// terraform plan ...
-	defer terraform.Plan(t, terraformOptions)
+	terraform.Plan(t, terraformOptions)
 	return Successful
 }
 
@@ -98,4 +95,13 @@ func CreateTerraformOptions(t *testing.T, module *TerraModule) (*terraform.Optio
 		TerraformDir: test_structure.CopyTerraformFolderToTemp(t, module.RootFolderPath, module.TerraformModulePath),
 		Vars:         module.Variables,
 	}, nil
+}
+
+// CleanUpExecution ... destroy all resources deployed.
+func CleanUpExecution(t *testing.T, terraformOptions *terraform.Options) {
+	// at the end of the test the resources are destroyed
+	ct.Foreground(ct.Blue, true)
+	logger.Logf(t, "Destroying module...")
+	ct.Foreground(ct.White, false)
+	terraform.Destroy(t, terraformOptions)
 }
