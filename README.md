@@ -76,7 +76,34 @@ It is a function embedded inside unit testing package to simplicity implementati
 4. Assert the expected result versus returned result.
 
 ```go
-TODO- some code
+package main
+
+import (
+	"testing"
+	unit_testing "github.com/czelabueno/infrastructure-as-code-testing/unit-testing"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test_onlyStaticAnalysis(t *testing.T) {
+	t.Parallel()
+
+	// Define yout terraform input variables
+	vars := make(map[string]interface{})
+	vars["var_1"] = "Value_1"
+	vars["var_2"] = "Value_2"
+
+	//Initialize TerraModule struct entering the data to locate individual module that you want test.
+	myModule := unit_testing.TerraModule{
+		RootFolderPath      : "../", //Put root path from this .go file is located
+		TerraformModulePath : "examples/azure/tf-storage", // Put module path where .tf files are located.
+		Variables           : vars,
+	}
+
+    // Call to RunStaticAnalysis to validate parser and dry-run check.
+    result := myunitmodule.RunStaticAnalysis(t, nil) // second param must be null to run this method by separated.
+
+	assert.Equal(t, unit_testing.Successful, result)
+}
 ```
 ### Unit Testing
 You can to see more scenarios implemented [samples/azure_storage_unit_test.go](https://github.com/czelabueno/infrastructure-as-code-testing/blob/master/samples/azure_storage_unit_test.go)
