@@ -49,7 +49,9 @@ func ValidateModule(t *testing.T, terraformOptions *terraform.Options) (result b
 		// Get health availability status of the given resource
 		availabilityStatus, err := availabilityStatusesClient.GetByResource(context.Background(), resourceID, "", "")
 		if err != nil {
+			ct.Foreground(ct.Red, false)
 			t.Fatalf("Cant connect with azure resourcehealth api service: %s", err.Error())
+			ct.Foreground(ct.White, false)
 			t.Fail() // So if error is not null the test must be fail
 		}
 

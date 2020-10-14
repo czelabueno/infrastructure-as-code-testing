@@ -8,11 +8,13 @@ These Go packages seek to simplify testing and meet the testing demands of a dev
 Click on the names of the tools to enter their official links.
 
 ## Concept
-If we can treat to the infrastructure like code snipe so we can make continuous testing on that and add it to our **CI/CD pipelines**.
+If you can treat to the infrastructure like code snipe so we can make continuous testing on that and add it to our **CI/CD pipelines**.
 When we works over dynamic environments as **cloud platforms** is easer test if infrastructure code works and it will not break our environment when its deployed.
 An infrastructure deployment can be apply changes to create, modify or destroy some part of or completly an environment. These changes are reflects in provisioning and configuration management processes normally.
 
-For write fully test for infrastructure code we can consider the following outline:
+![model-pyramid](./test-pyramid-overview.jpg)
+
+For write fully test for infrastructure code I consider the following outline:
 
 ### 1. Static Analysis: Test code without deploy it.
 
@@ -24,13 +26,13 @@ For write fully test for infrastructure code we can consider the following outli
 
 Can't test an entire architecture using unit tests. Better split the architecture in small modules and test each one unitly of them.
 
-One `.tfstate` file should be generated for each one module unit test.
+It can be said that a good unit test in infrastructure code is deploying to a real environment so it should be include:
 
-> It can be said that a good unit test in infrastructure code is deploying to a real environment so it should be include:
->
-> * Deploy real infrastructure. e.g: `$ terraform apply`
-> * Validate it works. E.g. via HTTP request, API calls, SSH commands, etc.
-> * Undeploy the infrastructure. e.g: `$ terraform destroy`
+* Deploy real infrastructure. e.g: `$ terraform apply`
+* Validate it works. E.g. via HTTP request, API calls, SSH commands, etc.
+* Undeploy the infrastructure. e.g: `$ terraform destroy`
+
+> One `.tfstate` file should be generated for each one module unit test.
 >
 
 ### 3. Integration Tests: Test multiple modules working together and related.
@@ -51,8 +53,6 @@ Here we can use the same strategy that unit test but apply it in a landing zone 
 > It can take a long time so it could be not executed frequently in a CI phase. It should be execute in a pre-delivery or as part of CD phase.
 
 ---
-## Usage model
-![model-pyramid](./test-pyramid-overview.jpg)
 
 > Original documentation and concepts were inspired in the best practices by Gruntwork-io. see [here](https://terratest.gruntwork.io/docs/testing-best-practices/unit-integration-end-to-end-test/)
 
@@ -67,46 +67,8 @@ Authentication method is the same used to run terraform command directly. For Az
 
 This sample use Azure CLI authentication assuming that you run it locally.
 
-### Static Analysis
-It is a function embedded inside unit testing package to simplicity implementation. However, it can be called independent as well.
-
-1. Import unit_testing package from [`unit-testing`](https://github.com/czelabueno/infrastructure-as-code-testing/unit-testing) directory.
-2. Initialize TerraModule struct to handle any terraform module. e.g. `mymodule := unit_testing.TerraModule{...}`.
-3. Run to RunStaticAnalysis function. e.g. `mymodule.RunStaticAnalysis(...)`.
-4. Assert the expected result versus returned result.
-
-```go
-package main
-
-import (
-	"testing"
-	unit_testing "github.com/czelabueno/infrastructure-as-code-testing/unit-testing"
-	"github.com/stretchr/testify/assert"
-)
-
-func Test_onlyStaticAnalysis(t *testing.T) {
-	t.Parallel()
-
-	// Define yout terraform input variables
-	vars := make(map[string]interface{})
-	vars["var_1"] = "Value_1"
-	vars["var_2"] = "Value_2"
-
-	//Initialize TerraModule struct entering the data to locate individual module that you want test.
-	myModule := unit_testing.TerraModule{
-		RootFolderPath      : "../", //Put root path from this .go file is located
-		TerraformModulePath : "examples/azure/tf-storage", // Put module path where .tf files are located.
-		Variables           : vars,
-	}
-
-    // Call to RunStaticAnalysis to validate parser and dry-run check.
-    result := myunitmodule.RunStaticAnalysis(t, nil) // second param must be null to run this method by separated.
-
-	assert.Equal(t, unit_testing.Successful, result)
-}
-```
-### Unit Testing
-You can to see more scenarios implemented [samples/azure_storage_unit_test.go](https://github.com/czelabueno/infrastructure-as-code-testing/blob/master/samples/azure_storage_unit_test.go)
+### Unit Testing package
+Package to simplicity implementation. You can to see more scenarios implemented [samples/azure_storage_unit_test.go](https://github.com/czelabueno/infrastructure-as-code-testing/blob/master/samples/azure_storage_unit_test.go)
 
 > Validate function is a generic implementation to confirm if resource works in the Cloud provider, so it call to [Azure Resource Health Rest API](https://docs.microsoft.com/en-us/rest/api/resourcehealth/availabilitystatuses/getbyresource) to confirm that resource is available and operating.
 >
@@ -115,8 +77,9 @@ You can to see more scenarios implemented [samples/azure_storage_unit_test.go](h
 
 1. Import unit_testing package from [`unit-testing`](https://github.com/czelabueno/infrastructure-as-code-testing/unit-testing) directory.
 2. Initialize TerraModule struct to handle any terraform module. e.g. `mymodule := unit_testing.TerraModule{...}`.
-3. Run unit test calling to TerratestExecution function. e.g. `mymodule.TerratestExecution(...)`.
+3. Run RunStaticAnalysis or TerratestExecution function. e.g. `mymodule.TerratestExecution(...)`.
 4. Assert the expected result versus returned result.
+
 
 ```go
 package main
@@ -144,7 +107,6 @@ func Test_MyModule(t *testing.T) {
 
 	//Call TerratestExecution to run unit test function: deploy, validate and undeploy.
 	result := myModule.TerratestExecution(t, false) // change to (t, true) to include static analysis
-
 	assert.Equal(t, unit_testing.Successful, result)
 }
 ```
