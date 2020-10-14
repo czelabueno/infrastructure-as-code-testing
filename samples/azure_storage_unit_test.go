@@ -45,3 +45,20 @@ func Test_WithStaticAnalysis(t *testing.T) {
 
 	assert.Equal(t, unit_testing.Successful, result)
 }
+
+func Test_onlyStaticAnalysis(t *testing.T) {
+	t.Parallel()
+
+	vars := make(map[string]interface{})
+	vars["account_tier"] = "Standard"
+	vars["account_replication_type"] = "LRS"
+
+	myunitmodule := unit_testing.TerraModule{
+		RootFolderPath:      "../",
+		TerraformModulePath: "examples/azure/tf-storage",
+		Variables:           vars,
+	}
+
+	result := myunitmodule.RunStaticAnalysis(t, nil)
+	assert.Equal(t, unit_testing.Successful, result)
+}
